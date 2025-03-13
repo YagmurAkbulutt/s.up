@@ -10,14 +10,14 @@ import SvgLess from '../../assets/less';
 import { height } from '../../utils/helpers';
 import Collections from './Collections';
 
-const CollectionsModal = ({ modalVisible, setModalVisible }) => {
+const CollectionsModal = ({ collectionModal, setCollectionModal }) => {
 
   return (
     <Modal
       animationType="slide"
       transparent={true}
-      visible={modalVisible}
-      onRequestClose={() => setModalVisible(false)}>
+      visible={collectionModal}
+      onRequestClose={() => setCollectionModal(false)}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.container}>
@@ -25,7 +25,7 @@ const CollectionsModal = ({ modalVisible, setModalVisible }) => {
               <Text style={styles.headerText}>Koleksiyon</Text>
             </View>
             <TouchableOpacity
-              onPress={() => setModalVisible(false)}
+              onPress={() => setCollectionModal(false)}
               activeOpacity={0.7}
               style={styles.closeButton}>
               <SvgLess style={styles.closeBtn} />

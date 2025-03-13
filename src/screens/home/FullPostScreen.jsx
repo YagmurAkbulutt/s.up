@@ -26,6 +26,7 @@ const FullPostScreen = ({image, onClose}) => {
   const [translateY] = useState(new Animated.Value(0));
   const [modalVisible, setModalVisible] = useState(false);
   const [commentModal, setCommentModal] = useState(false);
+  const [collectionModal, setCollectionModal] = useState(false);
 
   useEffect(() => {
     const listener = scrollY.addListener(({value}) => {
@@ -110,30 +111,34 @@ const FullPostScreen = ({image, onClose}) => {
             />
           </View>
 
-<View>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setModalVisible(true)}
-              activeOpacity={0.7}>
-            <SvgBookmark />
-            <Text style={styles.actionText}>55,3B</Text>
-          </TouchableOpacity>
-          <CollectionsModal  modalVisible={modalVisible}
-              setModalVisible={setModalVisible}/>
-          </View>
-
-
           <View>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => setModalVisible(true)}
-              activeOpacity={0.7}>
-              <SvgShare />
-              <Text style={styles.actionText}>55,3B</Text>
-            </TouchableOpacity>
-            <ShareModal
-              modalVisible={modalVisible}
-              setModalVisible={setModalVisible}
-            />
-          </View>
+  <TouchableOpacity
+    style={styles.actionBtn}
+    onPress={() => setCollectionModal(true)} 
+    activeOpacity={0.7}>
+    <SvgBookmark />
+    <Text style={styles.actionText}>55,3B</Text>
+  </TouchableOpacity>
+  <CollectionsModal
+    collectionModal={collectionModal} 
+    setCollectionModal={setCollectionModal} 
+  />
+</View>
+
+<View>
+  <TouchableOpacity
+    style={styles.actionBtn}
+    onPress={() => setModalVisible(true)} 
+    activeOpacity={0.7}>
+    <SvgShare />
+    <Text style={styles.actionText}>55,3B</Text>
+  </TouchableOpacity>
+  <ShareModal
+    modalVisible={modalVisible} 
+    setModalVisible={setModalVisible} 
+  />
+</View>
+
 
           <TouchableOpacity style={styles.actionBtn}>
             <SvgHanger />

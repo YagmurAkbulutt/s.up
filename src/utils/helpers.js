@@ -6,6 +6,9 @@ export const dismissKeyboard = () => {
   Keyboard.dismiss();
 };
 
+
+
+
 export const imageData = [
   {
     id: 1,
