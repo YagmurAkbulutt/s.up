@@ -611,6 +611,52 @@ export const post = [
   },
 ]
 
+export const style = [
+  {
+    id: 1,
+    photo: require("../assets/style-1.png"),
+    store: "Zara",
+    product: "Çizgili Mavi Gömlek",
+    price: 990.00
+  },
+  {
+    id: 2,
+    photo: require("../assets/style-2.png"),
+    store: "Zara",
+    product: "Siyah Elbise",
+    price: 1190.00
+  },
+  {
+    id: 3,
+    photo: require("../assets/style-3.png"),
+    store: "H&M",
+    product: "Beyaz Tişört",
+    price: 599.00
+  },
+  {
+    id: 4,
+    photo: require("../assets/style-4.png"),
+    store: "Mango",
+    product: "Kot Pantolon",
+    price: 799.00
+  },
+  {
+    id: 5,
+    photo: require("../assets/style-5.png"),
+    store: "Bershka",
+    product: "Kırmızı Ceket",
+    price: 1090.00
+  },
+  {
+    id: 6,
+    photo: require("../assets/style-6.png"),
+    store: "Pull&Bear",
+    product: "Yeşil Sweatshirt",
+    price: 750.00
+  }
+];
+
+
 
 
 

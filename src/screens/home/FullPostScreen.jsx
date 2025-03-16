@@ -19,6 +19,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import ShareModal from '../../components/Home/ShareModal';
 import CommentModal from '../../components/Home/CommentModal';
 import CollectionsModal from '../../components/Home/CollectionsModal';
+import HangerModal from '../../components/Home/HangerModal';
 
 const FullPostScreen = ({image, onClose}) => {
   const [scrollY] = useState(new Animated.Value(0));
@@ -27,6 +28,8 @@ const FullPostScreen = ({image, onClose}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [commentModal, setCommentModal] = useState(false);
   const [collectionModal, setCollectionModal] = useState(false);
+  const [hangerModal, setHangerModal] = useState(false)
+  const [isHangerOpen, setIsHangerOpen] = useState(false);
 
   useEffect(() => {
     const listener = scrollY.addListener(({value}) => {
@@ -52,6 +55,15 @@ const FullPostScreen = ({image, onClose}) => {
       scrollY.removeListener(listener);
     };
   }, [scrollY, fadeAnim, translateY, onClose]);
+
+  const toggleHangerModal = () => {
+    if (!hangerModal) {
+      setIsHangerOpen(true);
+    } else {
+      setTimeout(() => setIsHangerOpen(false), 300); 
+    }
+    setHangerModal(!hangerModal);
+  };
 
   return (
     <>
@@ -139,10 +151,12 @@ const FullPostScreen = ({image, onClose}) => {
   />
 </View>
 
-
-          <TouchableOpacity style={styles.actionBtn}>
-            <SvgHanger />
-          </TouchableOpacity>
+<View>
+  <TouchableOpacity style={styles.actionBtn} onPress={toggleHangerModal}>
+    <SvgHanger />
+  </TouchableOpacity>
+  <HangerModal hangerModal={hangerModal} setHangerModal={toggleHangerModal} />
+</View>
         </View>
 
         {/* Profil */}
@@ -313,4 +327,4 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-});
+}); 
