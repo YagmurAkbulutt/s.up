@@ -11,6 +11,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   RefreshControl,
+  Keyboard,
 } from 'react-native';
 import {useRoute} from '@react-navigation/native';
 import {dismissKeyboard, height, messageList, width} from '../../utils/helpers';
@@ -18,199 +19,215 @@ import UserInfo from '../../components/Chat/UserInfo';
 import Header from '../../components/Chat/Header';
 import SvgAddImage from '../../assets/addImage';
 import SvgSendBtn from '../../assets/sendBtn';
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import Loader from '../../components/Loader';
+import { Bubble, GiftedChat, InputToolbar } from 'react-native-gifted-chat';
+import { ScrollView } from 'react-native-gesture-handler';
+import { KeyboardAccessoryView } from 'react-native-keyboard-accessory';
 
 const ChatScreen = () => {
-  const flatListRef = useRef(null);
-
-  useEffect(() => {
-    if (flatListRef.current) {
-      setTimeout(() => {
-        flatListRef.current.scrollToEnd({animated: true});
-      }, 500);
-    }
-  }, [messages]);
-
-  const scrollToEnd = () => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({animated: true});
-    }
-  };
   const route = useRoute();
-  const {messageId} = route.params;
-  const {userInfo} = route.params || {};
+  const { userInfo, messageId } = route.params;
+  const [newMessage, setNewMessage] = useState('');
+  const flatListRef = useRef(null);
 
   const selectedMessage = messageList.find(item => item.id === messageId);
 
-  const lastMessage =
-    selectedMessage.messages[selectedMessage.messages.length - 1];
-  const lastMessageDate = new Date(lastMessage.timestamp);
-  const formattedDate = lastMessage
-    ? `${lastMessageDate.toLocaleDateString('tr-TR', {
-        day: '2-digit',
-        month: 'short',
-      })}, ` +
-      lastMessageDate
-        .toLocaleTimeString('tr-TR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-          timeZone: 'Europe/Istanbul',
-        })
-        .replace(/^(\d{2}):(\d{2})\s(Ö[ÖS])$/, '$1:$2 $3')
-    : '';
+  const formatMessagesForGiftedChat = (message) => {
+    return message.messages.map((msg, index) => ({
+      _id: `${message.id}-${index}`, 
+      text: msg.text, 
+      createdAt: new Date(msg.timestamp), 
+      user: {
+        _id: message.id, 
+        name: message.username, 
+        avatar: message.userImage, 
+      },
+    }));
+  };
 
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [messages, setMessages] = useState(selectedMessage.messages);
+  // Seçili mesajı formatla
+  const formattedMessages = selectedMessage ? formatMessagesForGiftedChat(selectedMessage) : [];
 
-  const onScroll = event => {
-    const contentOffsetY = event.nativeEvent.contentOffset.y;
-    if (contentOffsetY < -100 && !loading) {
-      setLoading(true);
-      setRefreshing(true);
-      setTimeout(() => {
-        setMessages([...messageList]);
-        setLoading(false);
-        setRefreshing(false);
-      }, 1500);
+  const [messages, setMessages] = useState(formattedMessages);
+
+  const onSend = useCallback((newMessages = []) => {
+    setMessages((previousMessages) =>
+      GiftedChat.append(previousMessages, newMessages)
+    );
+  }, []);
+
+  function formatDate(date) {
+    const months = [
+      "Oca", "Şub", "Mar", "Nis", "May", "Haz",
+      "Tem", "Ağu", "Eyl", "Eki", "Kas", "Arl"
+    ];
+  
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    let period = "ÖS"; 
+  
+    if (hours >= 12) {
+      if (hours > 12) hours -= 12;
+    } else {
+      period = "ÖÖ"; 
     }
+  
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+  
+    return `${date.getDate()} ${months[date.getMonth()]},${hours}:${minutes} ${period}`;
+  }
+  const renderDay = (props) => {
+    const { currentMessage } = props;
+    return (
+      <View style={{ alignItems: 'center', marginVertical:10 }}>
+        <Text style={{ color: '#9D9C9C', fontSize: 12, fontWeight: 'regular' }}>
+          {formatDate(new Date(currentMessage.createdAt))}
+        </Text>
+      </View>
+    );
   };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    setLoading(true);
-    setTimeout(() => {
-      setMessages([...messageList]);
-      setLoading(false);
-      setRefreshing(false);
-    }, 1500);
-  };
-  const [newMessage, setNewMessage] = useState('');
-
+  
   const handleSendMessage = () => {
     if (newMessage.trim().length > 0) {
       const newMsg = {
-        id: messages.length + 1,
+        _id: messages.length + 1,
         text: newMessage,
-        timestamp: new Date().getTime(),
-        isMe: true,
+        createdAt: new Date(),
+        user: {
+          _id: 1, 
+        },
       };
-      setMessages(prevMessages => [...prevMessages, newMsg]);
+  
+      setMessages((previousMessages) => GiftedChat.append(previousMessages, [newMsg]));
       setNewMessage('');
-
+  
       setTimeout(() => {
-        flatListRef.current?.scrollToEnd({animated: true});
+        flatListRef.current?.scrollToEnd({ animated: true });
       }, 300);
     }
   };
+  
+  
+
+  const renderInputToolbar = (props) => {
+    return (
+      
+        <View style={styles.inputContainer}>
+          <TouchableOpacity style={styles.inputBtn} activeOpacity={0.5}>
+            <SvgAddImage />
+          </TouchableOpacity>
+          <TextInput
+            value={newMessage}
+            onChangeText={setNewMessage}
+            style={styles.placeholder}
+            placeholder="Mesaj yaz..."
+            selectionColor='#D134AA'
+          />
+          <TouchableOpacity
+            onPress={() => {
+              handleSendMessage(); 
+            }}
+            style={styles.inputBtn}
+            activeOpacity={0.5}>
+            <SvgSendBtn />
+          </TouchableOpacity>
+        </View>
+    );
+  };
+  
+  
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <KeyboardAvoidingView
-      style={{flex: 1}}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 60}>
-      <TouchableWithoutFeedback onPress={dismissKeyboard} >
-        <SafeAreaView style={styles.container}>
-          <Header userInfo={userInfo} />
+  style={{ flex: 1 }}
+  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 60} 
+>
 
-          <View style={{flex: 1}}>
-            {loading && (
-              <View style={styles.loaderContainer}>
-                <Loader />
+  
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <Header userInfo={userInfo} />
+
+      <View style={{ flex: 1 }}>
+        
+          {/* UserInfo birlikte kaydırılabilir */}
+          <UserInfo userInfo={userInfo} />
+          
+  
+          {/* Mesajlar */}
+          <GiftedChat
+            messages={messages}
+            onSend={(messages) => onSend(messages)}
+            user={{ _id: 1 }}
+            renderDay={renderDay}
+            renderTime={() => null}  
+            renderInputToolbar={(props) => (
+              <View style={{ position: 'relative', bottom: 0, left: 0, right: 0, backgroundColor: '#fff' }}>
+                {renderInputToolbar(props)}
+              </View>
+            )}
+            bottomOffset={0} 
+            minInputToolbarHeight={50}
+            wrapInSafeArea={false}
+            messagesContainerStyle={{ flex: 1, marginTop:200 }}
+            ListHeaderComponent={() => (
+              <View style={{ backgroundColor: '#fff', padding: 10 }}>
+                <Text>User Info Component</Text>
+                <UserInfo userInfo={userInfo} />
               </View>
             )}
             
+            renderBubble={(props) => (
+              <Bubble
+                        {...props}
+                        wrapperStyle={{
+                          right: {
+                            backgroundColor: '#D134AA',
+                            borderTopLeftRadius: 50,
+              borderTopRightRadius: 50,
+              borderBottomLeftRadius: 50,
+              borderBottomRightRadius: 50,
+                            padding: 5,
+                            
+                          },
+                          left: {
+                            backgroundColor: '#F1F1F1',
+                            borderTopLeftRadius: 50,
+              borderTopRightRadius: 50,
+              borderBottomLeftRadius: 50,
+              borderBottomRightRadius: 50,
+                            padding: 5,
+                            margin:3,
+                            
+                          },
+                        }}
+                        textStyle={{
+                          right: { color: '#ffffff',fontSize:12 },
+                          left: { color: '#000000', fontSize:12 },
+                        }}
+                      />
+              )}
+            scrollToBottom
+            scrollEnabled={true}
+            
+          />
+        
 
-            <FlatList
-              data={selectedMessage.messages}
-              keyExtractor={(item, index) => index.toString()}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="interactive"
-              onScroll={onScroll}
-              scrollEnabled={true}
-              onContentSizeChange={scrollToEnd}
-              nestedScrollEnabled={false}
-              ref={flatListRef}
-              onLayout={scrollToEnd}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  colors={["transparent"]}
-                  tintColor="transparent"
-                />
-              }
-              ListHeaderComponent={
-                <>
-                  <UserInfo userInfo={userInfo} />
-                  <Text style={styles.lastMessageDate}>{formattedDate}</Text>
-                </>
-              }
-              renderItem={({item, index}) => {
-                const isLastMessage =
-                  !item.isMe && index === selectedMessage.messages.length - 1;
+        
+      </View>
+    </SafeAreaView>
+  
+</KeyboardAvoidingView>
+</TouchableWithoutFeedback>
 
-                return (
-                  <View
-                    style={[
-                      styles.messageContainer,
-                      item.isMe
-                        ? styles.myMessageContainer
-                        : styles.otherMessageContainer,
-                    ]}>
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                      {!item.isMe && (
-                        <Image
-                          source={isLastMessage ? userInfo?.userImage : null}
-                          style={
-                            isLastMessage
-                              ? styles.userAvatar
-                              : styles.emptyAvatar
-                          }
-                        />
-                      )}
-                      <View
-                        style={[
-                          styles.messageBubble,
-                          item.isMe ? styles.myMessage : styles.otherMessage,
-                        ]}>
-                        <Text style={styles.messageText}>{item.text}</Text>
-                      </View>
-                    </View>
-                  </View>
-                );
-              }}
-            />
-          </View>
-
-          {/* Input Alanı */}
-          <View style={styles.inputContainer}>
-            <TouchableOpacity style={styles.inputBtn} activeOpacity={0.5}>
-              <SvgAddImage />
-            </TouchableOpacity>
-            <TextInput
-              value={newMessage}
-              onChangeText={setNewMessage}
-              style={styles.placeholder}
-              placeholder="Mesaj yaz..."
-            />
-            <TouchableOpacity
-              onPress={handleSendMessage}
-              style={styles.inputBtn}
-              activeOpacity={0.5}>
-              <SvgSendBtn />
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+  
   );
 };
 
 export default ChatScreen;
-
+ 
 const styles = StyleSheet.create({
   loaderContainer: {
     top: 0, 

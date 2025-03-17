@@ -105,7 +105,7 @@ const HangerModal = ({ hangerModal, setHangerModal }) => {
   visible={webViewVisible}
   onClose={() => setWebViewVisible(false)}
   initialUrl={webViewUrl}
-  selectedItem={selectedItem}  // Yeni prop
+  selectedItem={selectedItem}  
 />
 
 
