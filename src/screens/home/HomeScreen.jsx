@@ -106,8 +106,7 @@ const HomeScreen = () => {
     tags: image.tags ? image.tags.join(', ') : '',
   }));
   const masonryRef = useRef(null);
-  console.log('Modal açıldı, formattedImages:', formattedImages);
-  console.log('Modal açılınca selectedImage:', selectedImage);
+
 
   return (
     <View style={styles.container}>
@@ -154,9 +153,10 @@ const HomeScreen = () => {
          visible={!!selectedImage}
          animationType="slide"
          onRequestClose={() => setSelectedImage(null)}
+         transparent={false} 
        >
          {formattedImages.length > 0 ? (
-           <View style={{flex:1}}>
+           <View style={{ flex: 1}}>
            <FlatList
              data={formattedImages}
              keyExtractor={(item, index) =>

@@ -202,6 +202,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    width:"100%",
+    height:"100%"
   },
   image: {
     width: '100%',

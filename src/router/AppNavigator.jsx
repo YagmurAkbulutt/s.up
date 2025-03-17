@@ -78,37 +78,31 @@ const MainTabNavigator = ({shouldHideTabBar}) => {
 
 
 const MainWrapper = () => {
-
   const navigation = useNavigation();
-  const route = useRoute();
-
   const [shouldHideTabBar, setShouldHideTabBar] = useState(false);
 
-  useLayoutEffect(() => {
-    const routeName = getFocusedRouteNameFromRoute(route);
-    if (!routeName) return;
-
-    setShouldHideTabBar(tabHiddenRoutes.includes(routeName));
-  }, [route]);
-
   useEffect(() => {
-    navigation.setOptions({
-      tabBarStyle: {
-        display: shouldHideTabBar ? "none" : "flex",
-      },
+    const unsubscribe = navigation.addListener("state", () => {
+      const state = navigation.getState();
+      const currentRoute = state?.routes[state.index]?.name;
+
+      setShouldHideTabBar(tabHiddenRoutes.includes(currentRoute));
     });
 
-    console.log("should hide:", shouldHideTabBar)
-  }, [navigation, shouldHideTabBar]);
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs">
-        {() => <MainTabNavigator route={route} shouldHideTabBar={shouldHideTabBar} />}
+        {() => <MainTabNavigator shouldHideTabBar={shouldHideTabBar} />}
       </Stack.Screen>
     </Stack.Navigator>
   );
 };
+
+
+
 
 
 const AppNavigator = () => {
@@ -133,6 +127,7 @@ const AppNavigator = () => {
         />
         <Stack.Screen name="Main" component={MainWrapper} />
       </Stack.Navigator>
+    
     </NavigationContainer>
     </MessageProvider>
   );

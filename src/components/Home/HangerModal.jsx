@@ -3,22 +3,60 @@ import SvgLess from '../../assets/less';
 import { height, style } from '../../utils/helpers';
 import SvgFilter from "../../assets/filter";
 import SvgBookmarkS from "../../assets/bookmarkS";
+import SvgBookmarksFill from "../../assets/bookmarksFill"
+import { useState } from 'react';
+import { WebView } from "react-native-webview";
+import WebViewModal from './WebViewModal';
 
 const HangerModal = ({ hangerModal, setHangerModal }) => {
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card} activeOpacity={0.7}>
-      <View style={styles.image}>
-        <Image source={item.photo} style={styles.photo} />
-        <TouchableOpacity>
-          <SvgBookmarkS style={styles.bookmark} />
-        </TouchableOpacity>
-      </View>
+  const [selectedBookmark, setSelectedBookmark] = useState(null);
+  const [webViewVisible, setWebViewVisible] = useState(false);
+  const [webViewUrl, setWebViewUrl] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
 
-      <Text style={styles.store}>{item.store}</Text>
-      <Text style={styles.product} numberOfLines={1} ellipsizeMode="tail">{item.product}</Text>
-      <Text style={styles.price}>₺{item.price.toFixed(2)}</Text>
-    </TouchableOpacity>
-  );
+
+  const handleBookmarkPress = (id) => {
+    setSelectedBookmark((prevId) => (prevId === id ? null : id));
+  };
+
+  const openWebView = (item) => {
+    setSelectedItem(item);
+    setWebViewUrl(item.websiteUrl);
+    setWebViewVisible(true);
+  };
+  
+  
+
+  const renderItem = ({ item }) => {
+    const isBookmarked = selectedBookmark === item.id;
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.7}
+        onPress={() => openWebView(item)}
+      >
+        <View style={styles.image}>
+          <Image source={item.photo} style={styles.photo} />
+          <TouchableOpacity onPress={() => handleBookmarkPress(item.id)}>
+            {isBookmarked ? (
+              <SvgBookmarksFill style={styles.bookmark} />
+            ) : (
+              <SvgBookmarkS style={styles.bookmark} />
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.textContainer}>
+          <Text style={styles.store}>{item.store}</Text>
+          <Text style={styles.product} numberOfLines={1} ellipsizeMode="tail">
+            {item.product}
+          </Text>
+          <Text style={styles.price}>{item.price.toFixed(2)} TL</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Modal
@@ -29,32 +67,26 @@ const HangerModal = ({ hangerModal, setHangerModal }) => {
     >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <View>
-            <View style={styles.container}>
-              <View style={styles.headerCont}>
-                <Text style={styles.headerText}>Stile göz at</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setHangerModal(false)}
-                activeOpacity={0.7}
-                style={styles.closeButton}
-              >
-                <SvgLess style={styles.closeBtn} />
-              </TouchableOpacity>
+          <View style={styles.container}>
+            <View style={styles.headerCont}>
+              <Text style={styles.headerText}>Stile göz at</Text>
             </View>
+            <TouchableOpacity
+              onPress={() => setHangerModal(false)}
+              activeOpacity={0.7}
+              style={styles.closeButton}
+            >
+              <SvgLess style={styles.closeBtn} />
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.container}>
-              <View style={styles.headerCont}>
-                <Text style={styles.intheaderText}>Aynı veya benzer ürünler</Text>
-              </View>
-              <TouchableOpacity
-                // onPress={() => setCollectionModal(false)}
-                activeOpacity={0.7}
-                style={styles.closeButton}
-              >
-                <SvgFilter style={styles.closeBtn} />
-              </TouchableOpacity>
+          <View style={styles.container}>
+            <View style={styles.headerCont}>
+              <Text style={styles.intheaderText}>Aynı veya benzer ürünler</Text>
             </View>
+            <TouchableOpacity activeOpacity={0.7} style={styles.closeButton}>
+              <SvgFilter style={styles.closeBtn} />
+            </TouchableOpacity>
           </View>
 
           <FlatList
@@ -67,6 +99,16 @@ const HangerModal = ({ hangerModal, setHangerModal }) => {
           />
         </View>
       </View>
+
+      {/* WebView Modal */}
+      <WebViewModal
+  visible={webViewVisible}
+  onClose={() => setWebViewVisible(false)}
+  initialUrl={webViewUrl}
+  selectedItem={selectedItem}  // Yeni prop
+/>
+
+
     </Modal>
   );
 };
@@ -87,6 +129,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     maxHeight: height * 0.55,
   },
+  textContainer: {
+    alignItems: 'flex-start', 
+    width: '100%',
+    marginTop:-6
+  },
+  
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -116,7 +164,7 @@ const styles = StyleSheet.create({
   card: {
     marginRight: 15,
     alignItems: 'center',
-    gap: 10,  // Kartlar arasındaki boşluğu artırdım
+    gap: 10, 
   },
   photo: {
     width: 113,
@@ -126,22 +174,24 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   store: {
-    fontWeight: 'bold',
-    fontSize: 14,
+    fontWeight: '500',
+    fontSize: 10,
     marginBottom: 5,
-    textAlign: 'left',  // Yazıyı sola yasladım
+    textAlign: 'left',  
   },
   product: {
-    fontSize: 12,
+    fontSize: 10,
+    fontWeight: '600',
     color: '#777',
     marginBottom: 5,
-    textAlign: 'left',  // Yazıyı sola yasladım
+    textAlign: 'left', 
+    maxWidth: 90
   },
   price: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '600',
     color: '#000',
-    textAlign: 'left',  // Yazıyı sola yasladım
+    textAlign: 'left', 
   },
   bookmark: {
     position: 'absolute',
