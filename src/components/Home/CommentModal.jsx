@@ -22,13 +22,13 @@ import SvgLike from '../../assets/like-s';
 import SvgLikeFill from '../../assets/likeFill-s';
 import SvgSendBtn from '../../assets/sendBtn';
 
-const CommentModal = ({commentModal, setCommentModal}) => {
+const CommentModal = ({commentModal, setCommentModal,onSubmitComment}) => {
   const [comments, setComments] = useState(commentsData);
   const [newComment, setNewComment] = useState('');
   const [expandedComments, setExpandedComments] = useState({});
   const [replyingTo, setReplyingTo] = useState(null); // Yeni state: hangi yoruma yanıt yazıldığını tutacak
   const emojis = ["👏", "🙌", "😎", "😍", "❤️‍🔥", "🫵"];
-
+  const [commentText, setCommentText] = useState('');
   const addEmojiToInput = (emoji) => {
     setNewComment(prev => prev + emoji); // Mevcut yoruma ekleme yap
   };
@@ -64,6 +64,14 @@ const CommentModal = ({commentModal, setCommentModal}) => {
       })
     );
   };
+
+    // Yorum gönderildiğinde
+    const handleSubmit = () => {
+      if (commentText.trim()) {
+        onSubmitComment(commentText); // Yorumu üst bileşene ilet
+        setCommentText(''); // Input'u temizle
+      }
+    };
   
 
   const toggleReplies = commentId => {

@@ -11,124 +11,144 @@ import SvgEyeOff from '../../assets/eyeoff';
 import {useState} from 'react';
 import {dismissKeyboard, height, width} from '../../utils/helpers';
 import SvgBack from '../../assets/back';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser } from '../../redux/slices/authSlice';
 
-const SignUpScreen = ({navigation}) => {
+const SignUpScreen = ({ navigation }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const dispatch = useDispatch();
+  const { isLoading, error } = useSelector((state) => state.auth);
+
+  // Keyboard'ı kapatma fonksiyonu
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
+  const handleSignUp = () => {
+    if (fullName && email && password) {
+      const userData = { fullName, email, password };
+      dispatch(registerUser(userData));
+    } else {
+      // Hata mesajı ekleyebilirsin
+      console.log('Lütfen tüm alanları doldurun.');
+    }
+  };
+
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
-      <View style={styles.container}>
-        <View style={styles.backBtn}>
-          <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-            <SvgBack />
-          </TouchableOpacity>
-        </View>
-        <View style={{gap: 13}}>
-          {/* Logo */}
-          <View style={styles.logoContainer}>
-            <SvgLogoS width={width * 0.2} height={width * 0.2} />
-          </View>
-
-          {/* Giriş Alanları */}
-          <View style={styles.inputContainer}>
-            {/* Kullanıcı adı veya e-posta */}
-            <View
-              style={[
-                styles.textInputContainer,
-                focusedInput === 'username' && styles.focusedInput,
-              ]}>
-              <TextInput
-                placeholder="Ad Soyad"
-                placeholderTextColor="#B9B9B9"
-                style={styles.textInput}
-                caretColor="#D134AA"
-                value={fullName}
-                onChangeText={text => {
-                  setFullName(text);
-                }}
-                onFocus={() => setFocusedInput('username')}
-                onBlur={() => setFocusedInput(null)}
-              />
-            </View>
-            <View
-              style={[
-                styles.textInputContainer,
-                focusedInput === 'email' && styles.focusedInput,
-              ]}>
-              <TextInput
-                placeholder="E-posta"
-                placeholderTextColor="#B9B9B9"
-                style={styles.textInput}
-                caretColor="#D134AA"
-                value={email}
-                onChangeText={text => {
-                  setEmail(text);
-                }}
-                onFocus={() => setFocusedInput('email')}
-                onBlur={() => setFocusedInput(null)}
-              />
-            </View>
-
-            {/* Şifre Girişi */}
-            <View
-              style={[
-                styles.passwordContainer,
-                focusedInput === 'password' && styles.focusedInput,
-              ]}>
-              <TextInput
-                placeholder="Şifre"
-                placeholderTextColor="#B9B9B9"
-                style={styles.textInputPassword}
-                secureTextEntry={!isPasswordVisible}
-                caretColor="#D134AA"
-                value={password}
-                onChangeText={text => {
-                  setPassword(text);
-                }}
-                onFocus={() => setFocusedInput('password')}
-                onBlur={() => setFocusedInput(null)}
-              />
-              <TouchableOpacity
-                onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                style={styles.eyeIcon}>
-                {isPasswordVisible ? (
-                  <SvgEyeOff width={24} height={24} />
-                ) : (
-                  <SvgEyeOff width={24} height={24} />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* İleri Butonu */}
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('Username', {
-                fullName: fullName,
-                email: email,
-                password: password,
-              })
-            }
-            style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>İleri</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Girişe dön */}
-        <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>Style Up hesabım var. </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('SignIn')}
-            style={styles.registerButton}>
-            <Text style={styles.registerLink}>Giriş Yap</Text>
-          </TouchableOpacity>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.backBtn}>
+        <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+          <SvgBack />
+        </TouchableOpacity>
       </View>
-    </TouchableWithoutFeedback>
+      <View style={{gap: 13}}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <SvgLogoS width={width * 0.2} height={width * 0.2} />
+        </View>
+
+        {/* Giriş Alanları */}
+        <View style={styles.inputContainer}>
+          {/* Kullanıcı adı veya e-posta */}
+          <View
+            style={[
+              styles.textInputContainer,
+              focusedInput === 'username' && styles.focusedInput,
+            ]}>
+            <TextInput
+              placeholder="Ad Soyad"
+              placeholderTextColor="#B9B9B9"
+              style={styles.textInput}
+              selectionColor="#D134AA"
+              value={fullName}
+              onChangeText={text => {
+                setFullName(text);
+              }}
+              onFocus={() => setFocusedInput('username')}
+              onBlur={() => setFocusedInput(null)}
+            />
+          </View>
+          <View
+            style={[
+              styles.textInputContainer,
+              focusedInput === 'email' && styles.focusedInput,
+            ]}>
+            <TextInput
+              placeholder="E-posta"
+              placeholderTextColor="#B9B9B9"
+              style={styles.textInput}
+              selectionColor="#D134AA"
+              value={email}
+              onChangeText={text => {
+                setEmail(text);
+              }}
+              onFocus={() => setFocusedInput('email')}
+              onBlur={() => setFocusedInput(null)}
+            />
+          </View>
+
+          {/* Şifre Girişi */}
+          <View
+            style={[
+              styles.passwordContainer,
+              focusedInput === 'password' && styles.focusedInput,
+            ]}>
+            <TextInput
+              placeholder="Şifre"
+              placeholderTextColor="#B9B9B9"
+              style={styles.textInputPassword}
+              secureTextEntry={!isPasswordVisible}
+              selectionColor="#D134AA"
+              value={password}
+              onChangeText={text => {
+                setPassword(text);
+              }}
+              onFocus={() => setFocusedInput('password')}
+              onBlur={() => setFocusedInput(null)}
+            />
+            <TouchableOpacity
+              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+              style={styles.eyeIcon}>
+              {isPasswordVisible ? (
+                <SvgEyeOff width={24} height={24} />
+              ) : (
+                <SvgEyeOff width={24} height={24} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* İleri Butonu */}
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('Username', {
+              fullName: fullName,
+              email: email,
+              password: password,
+            })
+          }
+          style={styles.loginButton}>
+          <Text style={styles.loginButtonText}>İleri</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Girişe dön */}
+      <View style={styles.registerContainer}>
+        <Text style={styles.registerText}>Style Up hesabım var. </Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('SignIn')}
+          style={styles.registerButton}>
+          <Text style={styles.registerLink}>Giriş Yap</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </TouchableWithoutFeedback>
   );
 };
 

@@ -10,18 +10,33 @@ import {useEffect, useState} from 'react';
 import {dismissKeyboard, height, width} from '../../utils/helpers';
 import SvgBack from '../../assets/back';
 import ProfileImagePicker from '../../components/Home/ProfileImagePicker';
+import { setUserProfile } from '../../redux/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
 
-const UsernameScreen = ({navigation, route}) => {
-  const {fullName, email, password, photo} = route.params;
+const UsernameScreen = ({ navigation, route }) => {
+  const { fullName, email, password, photo } = route.params;
   const [username, setUsername] = useState('');
-
   const [focusedInput, setFocusedInput] = useState(null);
+  const dispatch = useDispatch();
+  const user = useSelector(state => state.auth.user);
+  const currentUsername = useSelector(state => state.auth.username);
+  const currentPhoto = useSelector(state => state.auth.photo);
+
   useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerShown: false,
     });
-  }, [navigation]);
+    if (currentUsername) {
+      setUsername(currentUsername); 
+    }
+  }, [navigation, currentUsername]);
+
+
+  const handleUsernameSubmit = () => {
+    dispatch(setUserProfile({ username, photo: currentPhoto || photo }));  // Redux'a kullanıcı adı ve fotoğrafı kaydet
+    navigation.navigate("Main");
+  };
 
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
@@ -31,8 +46,7 @@ const UsernameScreen = ({navigation, route}) => {
             <SvgBack />
           </TouchableOpacity>
         </View>
-        <View style={{gap: 13}}>
-          {/* Logo */}
+        <View style={{ gap: 13 }}>
           <View style={styles.logoContainer}>
             <ProfileImagePicker />
           </View>
@@ -43,9 +57,7 @@ const UsernameScreen = ({navigation, route}) => {
             </Text>
           </View>
 
-          {/* Giriş Alanları */}
           <View style={styles.inputContainer}>
-            {/* Kullanıcı adı veya e-posta */}
             <View
               style={[
                 styles.textInputContainer,
@@ -58,20 +70,19 @@ const UsernameScreen = ({navigation, route}) => {
                 caretColor="#D134AA"
                 onFocus={() => setFocusedInput('username')}
                 onBlur={() => setFocusedInput(null)}
+                value={username}
                 onChangeText={setUsername}
               />
             </View>
           </View>
 
-          {/* İleri Butonu */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('Main')}
+            onPress={handleUsernameSubmit}
             style={styles.loginButton}>
             <Text style={styles.loginButtonText}>Kayıt Ol</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Girişe dön */}
         <View style={styles.registerContainer}>
           <Text style={styles.registerText}>Style Up hesabım var. </Text>
           <TouchableOpacity

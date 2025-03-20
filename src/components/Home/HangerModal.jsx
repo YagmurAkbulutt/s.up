@@ -1,7 +1,7 @@
 import { FlatList, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import SvgLess from '../../assets/less';
+import SvgLess from '../../assets/closeWhite';
 import { height, style } from '../../utils/helpers';
-import SvgFilter from "../../assets/filter";
+import SvgFilterWhite from "../../assets/filterWhite";
 import SvgBookmarkS from "../../assets/bookmarkS";
 import SvgBookmarksFill from "../../assets/bookmarksFill"
 import { useState } from 'react';
@@ -9,14 +9,20 @@ import { WebView } from "react-native-webview";
 import WebViewModal from './WebViewModal';
 
 const HangerModal = ({ hangerModal, setHangerModal }) => {
-  const [selectedBookmark, setSelectedBookmark] = useState(null);
+  const [selectedBookmark, setSelectedBookmark] = useState([]);
   const [webViewVisible, setWebViewVisible] = useState(false);
   const [webViewUrl, setWebViewUrl] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
 
 
   const handleBookmarkPress = (id) => {
-    setSelectedBookmark((prevId) => (prevId === id ? null : id));
+    setSelectedBookmark(prevBookmarks => {
+      if (prevBookmarks.includes(id)) {
+        return prevBookmarks.filter(bookmarkId => bookmarkId !== id); 
+      } else {
+        return [...prevBookmarks, id]; 
+      }
+    });
   };
 
   const openWebView = (item) => {
@@ -28,7 +34,7 @@ const HangerModal = ({ hangerModal, setHangerModal }) => {
   
 
   const renderItem = ({ item }) => {
-    const isBookmarked = selectedBookmark === item.id;
+    const isBookmarked = selectedBookmark.includes(item.id);
 
     return (
       <TouchableOpacity
@@ -85,7 +91,7 @@ const HangerModal = ({ hangerModal, setHangerModal }) => {
               <Text style={styles.intheaderText}>Aynı veya benzer ürünler</Text>
             </View>
             <TouchableOpacity activeOpacity={0.7} style={styles.closeButton}>
-              <SvgFilter style={styles.closeBtn} />
+              <SvgFilterWhite style={styles.closeBtn} />
             </TouchableOpacity>
           </View>
 
@@ -106,6 +112,8 @@ const HangerModal = ({ hangerModal, setHangerModal }) => {
   onClose={() => setWebViewVisible(false)}
   initialUrl={webViewUrl}
   selectedItem={selectedItem}  
+  data={style}
+
 />
 
 
@@ -122,7 +130,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -148,11 +155,12 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   intheaderText: {
     fontSize: 14,
     fontWeight: '700',
+    color: '#FFFFFF',
   },
   closeButton: {
     right: 10,
@@ -160,6 +168,7 @@ const styles = StyleSheet.create({
   closeBtn: {
     width: 24,
     height: 24,
+    color: '#FFFFFF',
   },
   card: {
     marginRight: 15,
@@ -178,25 +187,26 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginBottom: 5,
     textAlign: 'left',  
+    color:"#B9B9B9"
   },
   product: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#777',
+    color: '#FFFFFF',
     marginBottom: 5,
     textAlign: 'left', 
     maxWidth: 90
   },
   price: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: '700',
+    color: '#FFFFFF',
     textAlign: 'left', 
   },
   bookmark: {
     position: 'absolute',
     right: 5,
-    bottom: 10,
+    bottom: 15,
   },
   productList: {
     gap: 3,

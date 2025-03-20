@@ -8,9 +8,10 @@ import {
   ScrollView,
   FlatList,
   Dimensions,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import MasonryList from 'react-native-masonry-list';
-import {imageData, width} from '../../utils/helpers';
+import {height, imageData, width} from '../../utils/helpers';
 import ImageCarousel from '../../components/Home/ImageCarousel';
 import HomeSkeleton from '../../components/Home/HomeSkeleton';
 import Header from '../../components/Home/Header';
@@ -75,15 +76,17 @@ const HomeScreen = () => {
     loadImages();
   }, []);
 
-  const onScroll = event => {
+  const onScroll = (event) => {
     const contentOffsetY = event.nativeEvent.contentOffset.y;
-
+    
+    
     if (contentOffsetY < 100) {
-      setLoaderVisible(true);
-    } else {
       setLoaderVisible(false);
+    } else {
+      setLoaderVisible(true);
     }
   };
+  
 
   const customImageComponent = useMemo(
     () => item => {
@@ -107,7 +110,15 @@ const HomeScreen = () => {
   }));
   const masonryRef = useRef(null);
 
-
+  const handleScrollCloseModal = (event) => {
+    const contentOffsetY = event.nativeEvent.contentOffset.y;
+  
+    // 100 piksel kaydırıldığında modalı kapat
+    if (contentOffsetY > 100) {
+      setSelectedImage(null); // Modal kapanır
+    }
+  };
+  
   return (
     <View style={styles.container}>
       <Header />
@@ -149,60 +160,48 @@ const HomeScreen = () => {
         )}
       </>
       {selectedImage && (
-         <Modal
-         visible={!!selectedImage}
-         animationType="slide"
-         onRequestClose={() => setSelectedImage(null)}
-         transparent={false} 
-       >
-         {formattedImages.length > 0 ? (
-           <View style={{ flex: 1}}>
-           <FlatList
-             data={formattedImages}
-             keyExtractor={(item, index) =>
-               item.id ? item.id.toString() : index.toString()
-             }
-             showsVerticalScrollIndicator={false}
-             pagingEnabled
-             style={{ flex: 1 }}
-      contentContainerStyle={{ flexGrow: 1 }}
-      getItemLayout={(data, index) => ({
-        length: Dimensions.get("window").width, 
-        offset: Dimensions.get("window").width * index, 
-        index,
-      })}
-      initialScrollIndex={formattedImages.findIndex(
-        (img) => img.id === selectedImage.id
-      )}
-      renderItem={({ item }) => (
-        <FullPostScreen
-          image={item} 
-          onClose={() => setSelectedImage(null)} 
-          extraData={dataToScroll} 
-        />
-      )}
-      
-            
-           />
-         </View>
+       <Modal
+       visible={!!selectedImage}
+       animationType="slide"
+       onRequestClose={() => setSelectedImage(null)}
+       transparent={true}
+     >
+       {formattedImages.length > 0 ? (
          
-         ) : (
-           <Text style={{ textAlign: "center", marginTop: 20 }}>Yükleniyor...</Text>
-         )}
-       </Modal>
-    //    <Modal
-    //    visible={!!selectedImage}
-    //    animationType="slide"
-    //    onRequestClose={() => setSelectedImage(null)}>
-    //    <FullPostScreen
-    //      image={selectedImage}
-    //      onClose={() => setSelectedImage(null)}
-    //      extraData={dataToScroll}
-    //    />
-    //  </Modal>
-   
-
-       
+           <View style={{ flex: 1 }}>
+             {/* FlatList'i sadece içerik kısmı için yerleştiriyoruz */}
+             <FlatList
+               data={formattedImages}
+               keyExtractor={(item, index) =>
+                 item.id ? item.id.toString() : index.toString()
+               }
+              //  onScroll={handleScrollCloseModal}
+               showsVerticalScrollIndicator={false}
+               pagingEnabled
+               style={{ flex: 1, height: height * 100 }}
+               getItemLayout={(data, index) => ({
+                 length: Dimensions.get("window").width,
+                 offset: Dimensions.get("window").width * index,
+                 index,
+               })}
+               initialScrollIndex={formattedImages.findIndex(
+                 (img) => img.id === selectedImage.id
+               )}
+               renderItem={({ item }) => (
+                 <FullPostScreen
+                   image={item}
+                   onClose={() => setSelectedImage(null)}
+                   extraData={dataToScroll}
+                 />
+               )}
+             />
+           </View>
+         
+       ) : (
+         <Text style={{ textAlign: "center", marginTop: 20 }}>Yükleniyor...</Text>
+       )}
+     </Modal>
+     
       )}
     </View>
   );

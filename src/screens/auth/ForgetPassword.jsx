@@ -5,64 +5,99 @@ import {
   TouchableOpacity,
   View,
   TouchableWithoutFeedback,
+  Modal,
 } from 'react-native';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import SvgLock from '../../assets/lock';
 import SvgClose from '../../assets/close';
 import { dismissKeyboard, height, width } from '../../utils/helpers';
+import { useDispatch, useSelector } from 'react-redux';
+import { forgotPassword } from '../../redux/slices/authSlice';
 
 
-const ForgetPassword = ({navigation}) => {
-  const [focusedInput, setFocusedInput] = useState(null); 
-  
+const ForgetPassword = ({ navigation }) => {
+  const dispatch = useDispatch();
+  const { isLoading, error, message } = useSelector((state) => state.auth); // Redux durumları
+  const [email, setEmail] = useState("");
+  const [focusedInput, setFocusedInput] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false); 
+  const handleForgotPassword = () => {
+    if (email.trim()) {
+      dispatch(forgotPassword(email)); // Redux'a e-posta gönderimi
+    }
+  };
+  useEffect(() => {
+    if (message) {
+      setModalVisible(true); // Mesaj varsa modali aç
+    }
+  }, [message]);
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
-    <View style={styles.container}>
-      <View style={styles.closeBtn}>
-        <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-          <SvgClose />
-        </TouchableOpacity>
-      </View>
-      <View style={{gap: 13, alignItems: 'center', justifyContent: 'center'}}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <SvgLock width={width * 0.2} height={width * 0.2} />
-        </View>
-
-        <View style={styles.textContainer}>
-          <Text style={styles.textOne}>
-            Girişte sorun mu yaşıyorsun?
-          </Text>
-          <Text style={styles.textTwo}>
-            Kullanıcı adını veya e-posta adresini gir ve sana yeniden hesabına
-            girebilmen için bir bağlantı gönderelim
-          </Text>
-        </View>
-
-        {/* Giriş Alanları */}
-        <View style={styles.inputContainer}>
-          {/* Kullanıcı adı veya e-posta */}
-          <View
-            style={[
-              styles.textInputContainer,
-              focusedInput === 'username' && styles.focusedInput,
-            ]}>
-            <TextInput
-              placeholder="Kullanıcı adı veya e-posta"
-              placeholderTextColor="#B9B9B9"
-              style={styles.textInput}
-              caretColor="#D134AA" 
-              onFocus={() => setFocusedInput('username')}
-              onBlur={() => setFocusedInput(null)}
-            />
-          </View>
-          {/* Gönder Butonu */}
-          <TouchableOpacity style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>Gönder</Text>
+      <View style={styles.container}>
+        <View style={styles.closeBtn}>
+          <TouchableOpacity onPress={() => navigation.navigate("SignIn")}>
+            <SvgClose />
           </TouchableOpacity>
         </View>
+
+        <View style={{ gap: 13, alignItems: "center", justifyContent: "center" }}>
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <SvgLock width={width * 0.2} height={width * 0.2} />
+          </View>
+
+          <View style={styles.textContainer}>
+            <Text style={styles.textOne}>Girişte sorun mu yaşıyorsun?</Text>
+            <Text style={styles.textTwo}>
+              Kullanıcı adını veya e-posta adresini gir ve sana yeniden hesabına
+              girebilmen için bir bağlantı gönderelim
+            </Text>
+          </View>
+
+          {/* Giriş Alanları */}
+          <View style={styles.inputContainer}>
+            {/* Kullanıcı adı veya e-posta */}
+            <View
+              style={[
+                styles.textInputContainer,
+                focusedInput === "username" && styles.focusedInput,
+              ]}
+            >
+              <TextInput
+                placeholder="Kullanıcı adı veya e-posta"
+                placeholderTextColor="#B9B9B9"
+                style={styles.textInput}
+                caretColor="#D134AA"
+                value={email}
+                onChangeText={setEmail}
+                onFocus={() => setFocusedInput("username")}
+                onBlur={() => setFocusedInput(null)}
+              />
+            </View>
+
+            {/* Gönder Butonu */}
+            <TouchableOpacity style={styles.loginButton} onPress={handleForgotPassword}>
+              <Text style={styles.loginButtonText}>Gönder</Text>
+            </TouchableOpacity>
+
+            <Modal
+          visible={isModalVisible} // Modal görünürlük durumu
+          transparent={true} // Şeffaflık
+          animationType="fade" // Animasyon tipi
+          onRequestClose={() => setModalVisible(false)} // Modal kapanırken
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>{message}</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={styles.closeModalText}>Kapat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+          </View>
+        </View>
       </View>
-    </View>
     </TouchableWithoutFeedback>
   );
 };
@@ -136,5 +171,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Arkada koyu bir arka plan
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: 300,
+    alignItems: "center",
+  },
+  modalText: {
+    fontSize: 16,
+    color: "green",
+    marginBottom: 10,
+  },
+  closeModalText: {
+    color: "blue",
+    fontWeight: "bold",
   },
 });

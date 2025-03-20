@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Text,
   Animated,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import SvgCloseLight from '../../assets/closeLight';
 import SvgHeart from '../../assets/heart';
@@ -20,19 +21,75 @@ import ShareModal from '../../components/Home/ShareModal';
 import CommentModal from '../../components/Home/CommentModal';
 import CollectionsModal from '../../components/Home/CollectionsModal';
 import HangerModal from '../../components/Home/HangerModal';
+import {height, width} from '../../utils/helpers';
+import { useDispatch, useSelector } from 'react-redux';
+import { addLike, removeLike } from '../../redux/slices/likesSlice';
 
-const FullPostScreen = ({image, onClose}) => {
+const FullPostScreen = ({ image, onClose }) => {
+  const dispatch = useDispatch();
+
+  // Redux state'lerini al
+  const likesCount = useSelector((state) => state.likes.likesCount);
+  const commentsCount = useSelector((state) => state.comments.commentsCount);
+  const savedPosts = useSelector((state) => state.savedPosts.savedPosts);
+  const shareCount = useSelector((state) => state.share.shareCount);
+
   const [scrollY] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(1));
   const [translateY] = useState(new Animated.Value(0));
   const [modalVisible, setModalVisible] = useState(false);
   const [commentModal, setCommentModal] = useState(false);
   const [collectionModal, setCollectionModal] = useState(false);
-  const [hangerModal, setHangerModal] = useState(false)
+  const [hangerModal, setHangerModal] = useState(false);
   const [isHangerOpen, setIsHangerOpen] = useState(false);
+  const [loaderVisible, setLoaderVisible] = useState(false);
+  const likes = useSelector((state) => state.likes.likes);
+  const likedBy = useSelector((state) => state.likes.likedBy);
+  const userId = 1; 
+  const commentCount = useSelector((state) => state.comments.commentCount);
 
+  // Beğeni butonuna tıklandığında
+  const handleLike = () => {
+    if (likedBy.includes(userId)) {
+      dispatch(removeLike({ userId })); // Beğeniyi kaldır
+    } else {
+      dispatch(addLike({ userId })); // Beğeni ekle
+    }
+  };
+
+  // Yorum butonuna tıklandığında
+  const handleComment = () => {
+    setCommentModal(true);
+  };
+  // Yorum gönderildiğinde
+  const handleSubmitComment = (commentText) => {
+    const newComment = {
+      id: Date.now(), // Benzersiz bir ID (örneğin, zaman damgası)
+      userId: 1, // Örnek kullanıcı ID'si (gerçek uygulamada dinamik olmalı)
+      comment: commentText,
+    };
+    dispatch(addComment({ comment: newComment })); // Yorumu ekle
+    setCommentModal(false); // Modal'ı kapat
+  };
+
+  // Kaydet butonuna tıklandığında
+  const handleSave = () => {
+    if (savedPosts.includes(image.id)) {
+      dispatch(unsavePost(image.id));
+    } else {
+      dispatch(savePost(image.id));
+    }
+  };
+
+  // Paylaş butonuna tıklandığında
+  const handleShare = () => {
+    dispatch(incrementShareCount());
+    setModalVisible(true);
+  };
+
+  // Scroll animasyonu ve diğer kodlar...
   useEffect(() => {
-    const listener = scrollY.addListener(({value}) => {
+    const listener = scrollY.addListener(({ value }) => {
       if (value < -150) {
         Animated.parallel([
           Animated.timing(fadeAnim, {
@@ -56,141 +113,159 @@ const FullPostScreen = ({image, onClose}) => {
     };
   }, [scrollY, fadeAnim, translateY, onClose]);
 
+  const onScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: false },
+  );
+
   const toggleHangerModal = () => {
     if (!hangerModal) {
       setIsHangerOpen(true);
     } else {
-      setTimeout(() => setIsHangerOpen(false), 300); 
+      setTimeout(() => setIsHangerOpen(false), 300);
     }
     setHangerModal(!hangerModal);
   };
 
   return (
-    <>
-      <Animated.ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{nativeEvent: {contentOffset: {y: scrollY}}}],
-          {useNativeDriver: false},
-        )}
-        scrollEventThrottle={16}>
-        <Animated.View
-          style={[
-            styles.container,
-            {
-              opacity: fadeAnim,
-              transform: [{translateY}],
-            },
-          ]}>
-          {/* Üst Gölge */}
-          <LinearGradient
-            colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
-            style={styles.topGradient}
-          />
+    <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+      <View style={{ flex: 1 }}>
+        <Animated.ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}>
+          <Animated.View
+            style={[
+              styles.container,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY }],
+              },
+            ]}>
+            {/* Üst Gölge */}
+            <LinearGradient
+              colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
+              style={styles.topGradient}
+            />
 
-          {/* Fotoğraf */}
-          <Image source={{uri: image.uri}} style={styles.image} />
+            {/* Fotoğraf */}
+            <Image source={{ uri: image.uri }} style={styles.image} />
 
-          {/* Alt Gölge */}
-          <LinearGradient
-            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
-            style={styles.bottomGradient}
-          />
-        </Animated.View>
+            {/* Alt Gölge */}
+            <LinearGradient
+              colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
+              style={styles.bottomGradient}
+            />
+          </Animated.View>
 
-        <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-          <SvgCloseLight />
-        </TouchableOpacity>
-
-        {/* Action Buttons */}
-        <View style={styles.action}>
-          <TouchableOpacity style={styles.actionBtn}>
-            <SvgHeart />
-            <Text style={styles.actionText}>55,3B</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <SvgCloseLight />
           </TouchableOpacity>
 
-          <View>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => setCommentModal(true)}>
-              <SvgComments />
-              <Text style={styles.actionText}>55,3B</Text>
-            </TouchableOpacity>
-            <CommentModal
-              commentModal={commentModal}
-              setCommentModal={setCommentModal}
-            />
-          </View>
+          {/* Action Buttons */}
+          <View style={styles.action}>
+            {hangerModal ? null : (
+              <>
+                {/* Beğeni Butonu */}
+                <TouchableOpacity style={styles.actionBtn} onPress={handleLike}>
+                  <SvgHeart />
+                  <Text style={styles.actionText}>{likes}</Text>
+                </TouchableOpacity>
 
-          <View>
-  <TouchableOpacity
-    style={styles.actionBtn}
-    onPress={() => setCollectionModal(true)} 
-    activeOpacity={0.7}>
-    <SvgBookmark />
-    <Text style={styles.actionText}>55,3B</Text>
-  </TouchableOpacity>
-  <CollectionsModal
-    collectionModal={collectionModal} 
-    setCollectionModal={setCollectionModal} 
-  />
-</View>
+                {/* Yorum Butonu */}
+                <View>
+                  <TouchableOpacity style={styles.actionBtn} onPress={handleComment}>
+                    <SvgComments />
+                    <Text style={styles.actionText}>{commentCount}</Text>
+                  </TouchableOpacity>
+                  <CommentModal
+                    commentModal={commentModal}
+                    setCommentModal={setCommentModal}
+                    onSubmitComment={handleSubmitComment}
+                  />
+                </View>
 
-<View>
-  <TouchableOpacity
-    style={styles.actionBtn}
-    onPress={() => setModalVisible(true)} 
-    activeOpacity={0.7}>
-    <SvgShare />
-    <Text style={styles.actionText}>55,3B</Text>
-  </TouchableOpacity>
-  <ShareModal
-    modalVisible={modalVisible} 
-    setModalVisible={setModalVisible} 
-  />
-</View>
+                {/* Kaydet Butonu */}
+                <View>
+                  <TouchableOpacity style={styles.actionBtn} onPress={handleSave}>
+                    <SvgBookmark />
+                    <Text style={styles.actionText}>
+                      {savedPosts.includes(image.id) ? 'Saved' : 'Save'}
+                    </Text>
+                  </TouchableOpacity>
+                  <CollectionsModal
+                    collectionModal={collectionModal}
+                    setCollectionModal={setCollectionModal}
+                  />
+                </View>
 
-<View>
-  <TouchableOpacity style={styles.actionBtn} onPress={toggleHangerModal}>
-    <SvgHanger />
-  </TouchableOpacity>
-  <HangerModal hangerModal={hangerModal} setHangerModal={toggleHangerModal} />
-</View>
+                {/* Paylaş Butonu */}
+                <View>
+                  <TouchableOpacity style={styles.actionBtn} onPress={handleShare}>
+                    <SvgShare />
+                    <Text style={styles.actionText}>{shareCount}</Text>
+                  </TouchableOpacity>
+                  <ShareModal
+                    modalVisible={modalVisible}
+                    setModalVisible={setModalVisible}
+                  />
+                </View>
+              </>
+          )}
+            {!hangerModal && (
+            <View>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={toggleHangerModal}>
+                <SvgHanger />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <HangerModal
+            hangerModal={hangerModal}
+            setHangerModal={toggleHangerModal}
+          />
         </View>
+
+         
 
         {/* Profil */}
-        <View style={styles.profile}>
-          <View style={styles.container}>
-            <View style={styles.imageWrapper}>
-              <Image
-                source={require('../../assets/profilePhoto.png')}
-                style={styles.profileImage}
-              />
+        {hangerModal ? null : (
+          <View style={styles.profile}>
+            <View style={styles.profileContainer}>
+              <View style={styles.imageWrapper}>
+                <Image
+                  source={require('../../assets/profilePhoto.png')}
+                  style={styles.profileImage}
+                />
+              </View>
+              <TouchableOpacity style={styles.plusButton}>
+                <SvgPlusPinkB />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.plusButton}>
-              <SvgPlusPinkB />
-            </TouchableOpacity>
-          </View>
 
-          <View style={styles.title}>
-            <Text style={styles.username}>
-              @<Text style={styles.boldUsername}>{image?.username}</Text>
-            </Text>
-            <Text style={styles.caption}>
-              {image?.description}
-              {Array.isArray(image?.tags) && image?.tags.length > 0
-                ? image?.tags.map((tag, index) => (
-                    <Text key={index} style={styles.hashtag}>
-                      {tag}{' '}
-                    </Text>
-                  ))
-                : null}
-            </Text>
+            <View style={styles.title}>
+              <Text style={styles.username}>
+                @<Text style={styles.boldUsername}>{image?.username}</Text>
+              </Text>
+              <Text style={styles.caption}>
+                {image?.description}
+                {Array.isArray(image?.tags) && image?.tags.length > 0
+                  ? image?.tags.map((tag, index) => (
+                      <Text key={index} style={styles.hashtag}>
+                        {tag}{' '}
+                      </Text>
+                    ))
+                  : null}
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
       </Animated.ScrollView>
-    </>
+    </View>
+  </TouchableWithoutFeedback>
   );
 };
 
@@ -202,8 +277,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    width:"100%",
-    height:"100%"
+    width: width,
+    height: height,
   },
   image: {
     width: '100%',
@@ -232,9 +307,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   scrollContainer: {
-    flexGrow: 1,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    height: '100%',
   },
   action: {
     position: 'absolute',
@@ -260,7 +336,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  container: {
+  profileContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -329,4 +405,4 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-}); 
+});

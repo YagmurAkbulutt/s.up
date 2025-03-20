@@ -19,14 +19,15 @@ import {enableScreens} from 'react-native-screens';
 import SvgBack from '../../assets/back';
 import SvgBookmarkS from "../../assets/bookmarkS";
 import SvgBookmarksFill from "../../assets/bookmarksFill"
+import { height, width } from '../../utils/helpers';
 enableScreens(false);
 
-const WebViewModal = ({ visible, onClose, initialUrl, selectedItem }) => {
+const WebViewModal = ({ visible, onClose, initialUrl, selectedItem,data }) => {
   if (!selectedItem) return null;
   
   const [currentUrl, setCurrentUrl] = useState(initialUrl);
   const [webViewVisible, setWebViewVisible] = useState(false);
-  const [selectedBookmark, setSelectedBookmark] = useState(null);
+  const [selectedBookmark, setSelectedBookmark] = useState([]);
   const [selectedItemState, setSelectedItem] = useState(selectedItem);
 
   useEffect(() => {
@@ -42,7 +43,13 @@ const WebViewModal = ({ visible, onClose, initialUrl, selectedItem }) => {
   };
 
   const handleBookmarkPress = (id) => {
-    setSelectedBookmark(prevId => (prevId === id ? null : id)); 
+    setSelectedBookmark(prevBookmarks => {
+      if (prevBookmarks.includes(id)) {
+        return prevBookmarks.filter(bookmarkId => bookmarkId !== id); 
+      } else {
+        return [...prevBookmarks, id]; 
+      }
+    });
   };
 
   const openWebView = (item) => {
@@ -52,11 +59,11 @@ const WebViewModal = ({ visible, onClose, initialUrl, selectedItem }) => {
   };
 
   const renderSimilarItem = ({ item }) => {
-    const isBookmarked = selectedBookmark === item.id;
+    const isBookmarked = selectedBookmark.includes(item.id);
 
     return (
       <TouchableOpacity
-        style={[styles.card]}
+        style={styles.card}
         activeOpacity={0.7}
         onPress={() => openWebView(item)}
       >
@@ -87,19 +94,30 @@ const WebViewModal = ({ visible, onClose, initialUrl, selectedItem }) => {
 
   return (
     <>
-      <Modal visible={visible} animationType="slide" transparent>
-        <View style={styles.overlay}>
-          <View style={styles.modalContainer}>
-            {/* Kaydırılabilir Alan */}
-            <ScrollView showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollViewContent}
-              keyboardShouldPersistTaps="handled">
+  <Modal visible={visible} animationType="slide" transparent>
+    <View style={styles.overlay}>
+      <FlatList
+        data={data}
+        keyExtractor={(item) => item.id.toString()}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        initialScrollIndex={data.findIndex((item) => item.id === selectedItem.id)}
+        getItemLayout={(data, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        renderItem={({ item }) => (
+          <View style={[styles.modalContainer, { width: width, flex: 1,height:height * 0.90, marginTop:"23%" }]}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[styles.scrollViewContent, { flexGrow: 1 }]}
+              keyboardShouldPersistTaps="handled"
+            >
               {/* Ürün Görseli ve Kapat Butonu */}
               <View style={styles.imageContainer}>
-                <Image
-                  source={selectedItem.photo}
-                  style={styles.productImage}
-                />
+                <Image source={item.photo} style={styles.productImage} />
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                   <SvgClose style={styles.closeIcon} />
                 </TouchableOpacity>
@@ -107,11 +125,10 @@ const WebViewModal = ({ visible, onClose, initialUrl, selectedItem }) => {
 
               {/* Ürün Bilgileri */}
               <View style={styles.infoContainer}>
-                <View >
-                <Text style={styles.brand}>{selectedItem.store}</Text>
+                <Text style={styles.brand}>{item.store}</Text>
                 <View style={styles.priceContainer}>
-                <Text style={styles.productName}>{selectedItem.product}</Text>
-                <Text style={styles.price}>{selectedItem.price} TL</Text></View>
+                  <Text style={styles.productName}>{item.product}</Text>
+                  <Text style={styles.price}>{item.price} TL</Text>
                 </View>
 
                 {/* Butonlar */}
@@ -120,67 +137,94 @@ const WebViewModal = ({ visible, onClose, initialUrl, selectedItem }) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.websiteButton}
-                  onPress={goToWebsite}>
+                  onPress={() => goToWebsite(item.websiteUrl)}
+                >
                   <Text style={styles.websiteText}>Websitesi</Text>
                 </TouchableOpacity>
               </View>
 
               {/* Benzer Ürünler ve Filtre */}
               <View style={styles.filter}>
-                <Text style={styles.intheaderText}>
-                  Aynı veya benzer ürünler
-                </Text>
+                <Text style={styles.intheaderText}>Aynı veya benzer ürünler</Text>
                 <TouchableOpacity>
                   <SvgFilter />
                 </TouchableOpacity>
               </View>
 
               {/* FlatList ile benzer ürünleri göster */}
-              <FlatList
-                data={selectedItem.similar}
+              <View style={{width:"100%"}}>
+              {/* <FlatList
+                data={item.similar}
                 renderItem={renderSimilarItem}
-                keyExtractor={item => item.product}
-                horizontal
+                keyExtractor={(similarItem) => similarItem.product}
+                horizontal={true}
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.similarProductsContainer}
-              />
+                // style={styles.similarProductsContainer}
+                contentContainerStyle={{ width: data.length * width }}
+                // style={{ flexDirection: 'row', width:width }}
+                getItemLayout={(data, index) => ({
+                  length: width,
+                  offset: width * index,
+                  index,
+                })}
+              /> */}
+              <ScrollView
+  horizontal={true}  
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={{ flexDirection: 'row',marginHorizontal:20, marginVertical:10, marginBottom:"10%" }}  
+>
+  {item.similar.map((similarItem) => (
+    <View key={similarItem.product} >
+      {renderSimilarItem({ item: similarItem })}
+    </View>
+  ))}
+</ScrollView>
+
+              </View>
             </ScrollView>
           </View>
+        )}
+      />
+      
+      {/* WebView'i ayrı bir modalda aç */}
+      {webViewVisible && currentUrl && (
+        <Modal
+          visible={webViewVisible}
+          animationType="slide"
+          transparent={true} // Şeffaflık ekliyoruz
+          statusBarTranslucent={true} // Android için durum çubuğunu gizler
+        >
+          <View style={styles.overlay}>
+            {/* Overlay */}
+            <View style={styles.webViewContainer}>
+              {/* Kapatma Butonu */}
+              <TouchableOpacity
+                onPress={() => setWebViewVisible(false)}
+                style={styles.webViewCloseButton}
+              >
+                <SvgBack width={24} height={24} />
+                <Text style={styles.sparklesText}>Sparkles</Text>
+              </TouchableOpacity>
 
-          {/* WebView'i ayrı bir modalda aç */}
-          {webViewVisible && currentUrl && (
-            <Modal
-              visible={webViewVisible}
-              animationType="slide"
-              transparent={true} // Şeffaflık ekliyoruz
-              statusBarTranslucent={true} // Android için durum çubuğunu gizler
-            >
-              <View style={styles.overlay}>
-                {' '}
-                {/* Overlay */}
-                <View style={styles.webViewContainer}>
-                  {/* Kapatma Butonu */}
+              {/* WebView */}
+              <WebView source={{uri: currentUrl}} style={styles.webView} />
+            </View>
+          </View>
+        </Modal>
+      )}
+    </View>
+  </Modal>
+</>
 
-                  <TouchableOpacity
-                    onPress={() => setWebViewVisible(false)}
-                    style={styles.webViewCloseButton}>
-                    <SvgBack width={24} height={24} />
-                    <Text style={styles.sparklesText}>Sparkles</Text>
-                  </TouchableOpacity>
-
-                  {/* WebView */}
-                  <WebView source={{uri: currentUrl}} style={styles.webView} />
-                </View>
-              </View>
-            </Modal>
-          )}
-        </View>
-      </Modal>
-    </>
   );
 };
 
 const styles = StyleSheet.create({
+  flatListContainer: {
+    alignItems: 'center', 
+    justifyContent: 'flex-start', 
+    paddingBottom: 20, 
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -215,7 +259,6 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     width: '100%',
-    alignItems: "center",
     marginTop: 20,
     paddingHorizontal: 20,
   },
@@ -224,13 +267,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#B9B9B9',
     textTransform: 'uppercase',
-    textAlign: "left",
+    // textAlign: "left",
+    alignItems:"flex-start"
   },
   productName: {
     fontSize: 16,
     fontWeight: 'bold',
     marginVertical: 5,
     flex: 1,  
+    textAlign:"left"
   },
   price: {
     fontSize: 16,
@@ -244,6 +289,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     width: '100%',
+    flex:1
   },
   saveButton: {
     backgroundColor: '#000',
@@ -288,12 +334,16 @@ const styles = StyleSheet.create({
   similarProductsContainer: {
     marginTop: 20,
     paddingBottom: 20,
-    marginHorizontal:20
+    marginHorizontal:20,
+    flexDirection:"row",
+    width:"100%"
+
   },
   similarItemContainer: {
     width: 180,
     marginHorizontal: 10,
     alignItems: 'center',
+
   },
   similarProductImage: {
     width: '100%',
@@ -338,7 +388,8 @@ const styles = StyleSheet.create({
   card: {
     marginRight: 15,
     alignItems: 'center',
-    gap: 10, 
+    gap: 8, 
+    flexDirection:"column",
     
   },
   similarPhoto: {
